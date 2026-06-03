@@ -1,0 +1,1990 @@
+=== ./routers/recommendation_router.py ===
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from typing import List
+from app.database import get_db
+from app.services.recommendation_service import RecommendationService
+from app.schemas.recommendation import RecommendedCourse
+
+router = APIRouter(prefix="/recommendations", tags=["Recommendation"])
+
+@router.get("/{student_id}", response_model=List[RecommendedCourse])
+def get_makeup_course_recommendations(student_id: str, db: Session = Depends(get_db)):
+    service = RecommendationService(db)
+    return service.get_recommendations(student_id)=== ./routers/student_router.py ===
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.student_repository import StudentRepository
+from app.schemas.student_schema import StudentCreate, StudentResponse
+from app.services.student_service import StudentService
+
+
+router = APIRouter(
+    prefix="/students",
+    tags=["Students"]
+)
+
+
+def get_student_service(db: Session = Depends(get_db)):
+    repository = StudentRepository(db)
+    return StudentService(repository)
+
+
+@router.get("/", response_model=list[StudentResponse])
+def get_students(service: StudentService = Depends(get_student_service)):
+    return service.get_all_students()
+
+
+@router.get("/{student_id}", response_model=StudentResponse)
+def get_student(
+    student_id: str,
+    service: StudentService = Depends(get_student_service)
+):
+    student = service.get_student_by_id(student_id)
+
+    if student is None:
+        raise HTTPException(status_code=404, detail="找不到學生")
+
+    return student
+
+
+@router.post("/", response_model=StudentResponse)
+def create_student(
+    student_data: StudentCreate,
+    service: StudentService = Depends(get_student_service)
+):
+    return service.create_student(student_data)=== ./routers/credit_check_router.py ===
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.credit_check_repository import CreditCheckRepository
+from app.schemas.credit_check_schema import (
+    CreditCheckResponse,
+    CreditCheckSummaryResponse,
+)
+from app.services.credit_check_service import CreditCheckService
+from app.utils.auth import get_current_user_payload
+
+router = APIRouter(
+    prefix="/credit-check",
+    tags=["Credit Check"]
+)
+
+
+def get_credit_check_service(db: Session = Depends(get_db)):
+    repository = CreditCheckRepository(db)
+    return CreditCheckService(repository)
+
+
+@router.get("/students/{student_id}", response_model=CreditCheckResponse)
+def check_student_graduation(
+    student_id: str,
+    service: CreditCheckService = Depends(get_credit_check_service)
+):
+    result = service.check_student_graduation(student_id)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="找不到學生")
+
+    return result
+
+
+@router.get("/students/{student_id}/summary", response_model=CreditCheckSummaryResponse)
+def get_student_graduation_summary(
+    student_id: str,
+    service: CreditCheckService = Depends(get_credit_check_service)
+):
+    result = service.get_graduation_summary(student_id)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="找不到學生")
+
+    return result
+
+@router.get("/me", response_model=CreditCheckResponse)
+def check_my_graduation(
+    current_user: dict = Depends(get_current_user_payload),
+    service: CreditCheckService = Depends(get_credit_check_service)
+):
+    student_id = current_user["student_id"]
+
+    result = service.check_student_graduation(student_id)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="找不到學生")
+
+    return result
+
+
+@router.get("/me/summary", response_model=CreditCheckSummaryResponse)
+def get_my_graduation_summary(
+    current_user: dict = Depends(get_current_user_payload),
+    service: CreditCheckService = Depends(get_credit_check_service)
+):
+    student_id = current_user["student_id"]
+
+    result = service.get_graduation_summary(student_id)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="找不到學生")
+
+    return result=== ./routers/__init__.py ===
+=== ./routers/course_router.py ===
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.course_repository import CourseRepository
+from app.schemas.course_schema import CourseCreate, CourseResponse
+from app.services.course_service import CourseService
+
+
+router = APIRouter(
+    prefix="/courses",
+    tags=["Courses"]
+)
+
+
+def get_course_service(db: Session = Depends(get_db)):
+    repository = CourseRepository(db)
+    return CourseService(repository)
+
+
+@router.get("/", response_model=list[CourseResponse])
+def get_courses(service: CourseService = Depends(get_course_service)):
+    return service.get_all_courses()
+
+
+@router.get("/{course_id}", response_model=CourseResponse)
+def get_course(
+    course_id: str,
+    service: CourseService = Depends(get_course_service)
+):
+    course = service.get_course_by_id(course_id)
+
+    if course is None:
+        raise HTTPException(status_code=404, detail="找不到課程")
+
+    return course
+
+
+@router.post("/", response_model=CourseResponse)
+def create_course(
+    course_data: CourseCreate,
+    service: CourseService = Depends(get_course_service)
+):
+    return service.create_course(course_data)=== ./routers/graduation_rule_router.py ===
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.graduation_rule_repository import GraduationRuleRepository
+from app.schemas.graduation_rule_schema import (
+    GraduationRuleCreate,
+    GraduationRuleResponse,
+)
+from app.services.graduation_rule_service import GraduationRuleService
+
+
+router = APIRouter(
+    prefix="/graduation-rules",
+    tags=["Graduation Rules"]
+)
+
+
+def get_rule_service(db: Session = Depends(get_db)):
+    repository = GraduationRuleRepository(db)
+    return GraduationRuleService(repository)
+
+
+@router.get("/", response_model=list[GraduationRuleResponse])
+def get_rules(service: GraduationRuleService = Depends(get_rule_service)):
+    return service.get_all_rules()
+
+
+@router.get("/{rule_id}", response_model=GraduationRuleResponse)
+def get_rule(
+    rule_id: int,
+    service: GraduationRuleService = Depends(get_rule_service)
+):
+    rule = service.get_rule_by_id(rule_id)
+
+    if rule is None:
+        raise HTTPException(status_code=404, detail="找不到畢業規則")
+
+    return rule
+
+
+@router.get("/year/{admission_year}", response_model=list[GraduationRuleResponse])
+def get_rules_by_year(
+    admission_year: int,
+    service: GraduationRuleService = Depends(get_rule_service)
+):
+    return service.get_rules_by_admission_year(admission_year)
+
+
+@router.post("/", response_model=GraduationRuleResponse)
+def create_rule(
+    rule_data: GraduationRuleCreate,
+    service: GraduationRuleService = Depends(get_rule_service)
+):
+    return service.create_rule(rule_data)=== ./routers/auth_router.py ===
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.student_repository import StudentRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.auth_schema import UserRegister, UserLogin, TokenResponse
+from app.services.auth_service import AuthService
+from fastapi.security import OAuth2PasswordRequestForm
+
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
+
+
+def get_auth_service(db: Session = Depends(get_db)):
+    user_repository = UserRepository(db)
+    student_repository = StudentRepository(db)
+    return AuthService(user_repository, student_repository)
+
+
+@router.post("/register")
+def register(
+    register_data: UserRegister,
+    service: AuthService = Depends(get_auth_service)
+):
+    user, error = service.register(register_data)
+
+    if error is not None:
+        raise HTTPException(status_code=400, detail=error)
+
+    return {
+        "message": "註冊成功",
+        "user_id": user.user_id,
+        "student_id": user.student_id,
+        "username": user.username
+    }
+
+
+@router.post("/login", response_model=TokenResponse)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    service: AuthService = Depends(get_auth_service)
+):
+    login_data = UserLogin(
+        username=form_data.username,
+        password=form_data.password
+    )
+
+    token = service.login(login_data)
+
+    if token is None:
+        raise HTTPException(status_code=401, detail="帳號或密碼錯誤")
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }=== ./routers/course_category_mapping_router.py ===
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.course_category_mapping_repository import CourseCategoryMappingRepository
+from app.schemas.course_category_mapping_schema import (
+    CourseCategoryMappingCreate,
+    CourseCategoryMappingResponse,
+)
+from app.services.course_category_mapping_service import CourseCategoryMappingService
+
+
+router = APIRouter(
+    prefix="/course-category-mappings",
+    tags=["Course Category Mappings"]
+)
+
+
+def get_mapping_service(db: Session = Depends(get_db)):
+    repository = CourseCategoryMappingRepository(db)
+    return CourseCategoryMappingService(repository)
+
+
+@router.get("/", response_model=list[CourseCategoryMappingResponse])
+def get_mappings(service: CourseCategoryMappingService = Depends(get_mapping_service)):
+    return service.get_all_mappings()
+
+
+@router.post("/", response_model=CourseCategoryMappingResponse)
+def create_mapping(
+    mapping_data: CourseCategoryMappingCreate,
+    service: CourseCategoryMappingService = Depends(get_mapping_service)
+):
+    return service.create_mapping(mapping_data)=== ./routers/student_course_record_router.py ===
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.student_course_record_repository import StudentCourseRecordRepository
+from app.schemas.student_course_record_schema import (
+    StudentCourseRecordCreate,
+    StudentCourseRecordResponse,
+)
+from app.services.student_course_record_service import StudentCourseRecordService
+from app.utils.auth import get_current_user_payload
+router = APIRouter(
+    prefix="/student-course-records",
+    tags=["Student Course Records"]
+)
+
+
+def get_record_service(db: Session = Depends(get_db)):
+    repository = StudentCourseRecordRepository(db)
+    return StudentCourseRecordService(repository)
+
+
+@router.get("/", response_model=list[StudentCourseRecordResponse])
+def get_records(service: StudentCourseRecordService = Depends(get_record_service)):
+    return service.get_all_records()
+
+
+@router.get("/student/{student_id}", response_model=list[StudentCourseRecordResponse])
+def get_records_by_student(
+    student_id: str,
+    service: StudentCourseRecordService = Depends(get_record_service)
+):
+    return service.get_records_by_student_id(student_id)
+
+
+@router.post("/", response_model=StudentCourseRecordResponse)
+def create_record(
+    record_data: StudentCourseRecordCreate,
+    service: StudentCourseRecordService = Depends(get_record_service)
+):
+    return service.create_record(record_data)
+
+
+@router.get("/me", response_model=list[StudentCourseRecordResponse])
+def get_my_records(
+    current_user: dict = Depends(get_current_user_payload),
+    service: StudentCourseRecordService = Depends(get_record_service)
+):
+    student_id = current_user["student_id"]
+
+    return service.get_records_by_student_id(student_id)
+
+
+@router.post("/upload")
+async def upload_my_records(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user_payload),
+    service: StudentCourseRecordService = Depends(get_record_service)
+):
+    if not file.filename.endswith(".json"):
+        raise HTTPException(status_code=400, detail="請上傳 JSON 檔案")
+
+    content = await file.read()
+    json_content = content.decode("utf-8-sig")
+
+    student_id = current_user["student_id"]
+
+    records, error = service.upload_records_from_school_json(
+        student_id=student_id,
+        json_content=json_content
+    )
+
+    if error is not None:
+        raise HTTPException(status_code=400, detail=error)
+
+    return {
+        "message": "學校修課資料上傳成功",
+        "count": len(records)
+    }=== ./routers/course_category_router.py ===
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.course_category_repository import CourseCategoryRepository
+from app.schemas.course_category_schema import (
+    CourseCategoryCreate,
+    CourseCategoryResponse,
+)
+from app.services.course_category_service import CourseCategoryService
+
+
+router = APIRouter(
+    prefix="/course-categories",
+    tags=["Course Categories"]
+)
+
+
+def get_category_service(db: Session = Depends(get_db)):
+    repository = CourseCategoryRepository(db)
+    return CourseCategoryService(repository)
+
+
+@router.get("/", response_model=list[CourseCategoryResponse])
+def get_categories(service: CourseCategoryService = Depends(get_category_service)):
+    return service.get_all_categories()
+
+
+@router.get("/{category_id}", response_model=CourseCategoryResponse)
+def get_category(
+    category_id: int,
+    service: CourseCategoryService = Depends(get_category_service)
+):
+    category = service.get_category_by_id(category_id)
+
+    if category is None:
+        raise HTTPException(status_code=404, detail="找不到課程分類")
+
+    return category
+
+
+@router.post("/", response_model=CourseCategoryResponse)
+def create_category(
+    category_data: CourseCategoryCreate,
+    service: CourseCategoryService = Depends(get_category_service)
+):
+    return service.create_category(category_data)=== ./routers/required_course_router.py ===
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.required_course_repository import RequiredCourseRepository
+from app.schemas.required_course_schema import (
+    RequiredCourseCreate,
+    RequiredCourseResponse,
+)
+from app.services.required_course_service import RequiredCourseService
+
+
+router = APIRouter(
+    prefix="/required-courses",
+    tags=["Required Courses"]
+)
+
+
+def get_required_course_service(db: Session = Depends(get_db)):
+    repository = RequiredCourseRepository(db)
+    return RequiredCourseService(repository)
+
+
+@router.get("/", response_model=list[RequiredCourseResponse])
+def get_required_courses(
+    service: RequiredCourseService = Depends(get_required_course_service)
+):
+    return service.get_all_required_courses()
+
+
+@router.get("/year/{admission_year}", response_model=list[RequiredCourseResponse])
+def get_required_courses_by_year(
+    admission_year: int,
+    service: RequiredCourseService = Depends(get_required_course_service)
+):
+    return service.get_required_courses_by_admission_year(admission_year)
+
+
+@router.post("/", response_model=RequiredCourseResponse)
+def create_required_course(
+    required_course_data: RequiredCourseCreate,
+    service: RequiredCourseService = Depends(get_required_course_service)
+):
+    return service.create_required_course(required_course_data)=== ./config.py ===
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    DATABASE_URL: str
+
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()=== ./database.py ===
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+from app.config import settings
+
+
+class Base(DeclarativeBase):
+    """
+    所有 SQLAlchemy ORM Model 的共同基底類別
+    之後 Student、Course 等資料表都會繼承這個 Base
+    """
+    pass
+
+
+# 建立資料庫引擎
+# engine 負責管理 Python 和 MySQL 之間的連線
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=True
+)
+
+
+# 建立 Session 工廠
+# Session 是我們實際用來查詢、新增、修改、刪除資料的物件
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False
+)
+
+
+def get_db():
+    """
+    FastAPI dependency
+    每次 API 被呼叫時，提供一個資料庫 session
+    API 結束後自動關閉 session
+    """
+    db = SessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()=== ./utils/auth.py ===
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+
+from app.config import settings
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def get_current_user_payload(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+
+        user_id = payload.get("sub")
+        student_id = payload.get("student_id")
+        username = payload.get("username")
+
+        if user_id is None or student_id is None or username is None:
+            raise HTTPException(status_code=401, detail="無效的登入憑證")
+
+        return {
+            "user_id": int(user_id),
+            "student_id": str(student_id),
+            "username": username
+        }
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="無效或過期的登入憑證")=== ./utils/__init__.py ===
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+
+from app.config import settings
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def get_current_user_payload(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+
+        user_id = payload.get("sub")
+        student_id = payload.get("student_id")
+        username = payload.get("username")
+
+        if user_id is None or student_id is None or username is None:
+            raise HTTPException(status_code=401, detail="無效的登入憑證")
+
+        return {
+            "user_id": int(user_id),
+            "student_id": int(student_id),
+            "username": username
+        }
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="無效或過期的登入憑證")=== ./utils/response.py ===
+=== ./repositories/graduation_rule_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.graduation_rule import GraduationRule
+
+
+class GraduationRuleRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(GraduationRule).all()
+
+    def get_by_id(self, rule_id: int):
+        return (
+            self.db.query(GraduationRule)
+            .filter(GraduationRule.rule_id == rule_id)
+            .first()
+        )
+
+    def get_by_admission_year(self, admission_year: int):
+        return (
+            self.db.query(GraduationRule)
+            .filter(GraduationRule.admission_year == admission_year)
+            .all()
+        )
+
+    def create(self, rule: GraduationRule):
+        self.db.add(rule)
+        self.db.commit()
+        self.db.refresh(rule)
+        return rule=== ./repositories/required_course_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.required_course import RequiredCourse
+
+
+class RequiredCourseRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(RequiredCourse).all()
+
+    def get_by_admission_year(self, admission_year: int):
+        return (
+            self.db.query(RequiredCourse)
+            .filter(RequiredCourse.admission_year == admission_year)
+            .all()
+        )
+
+    def create(self, required_course: RequiredCourse):
+        self.db.add(required_course)
+        self.db.commit()
+        self.db.refresh(required_course)
+        return required_course=== ./repositories/__init__.py ===
+=== ./repositories/course_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.course import Course
+
+
+class CourseRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(Course).all()
+
+    def get_by_id(self, course_id: str):
+        return (
+            self.db.query(Course)
+            .filter(Course.course_id == course_id)
+            .first()
+        )
+
+    def create(self, course: Course):
+        self.db.add(course)
+        self.db.commit()
+        self.db.refresh(course)
+        return course=== ./repositories/credit_check_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.student import Student
+from app.models.student_course_record import StudentCourseRecord
+from app.models.course import Course
+from app.models.course_category import CourseCategory
+from app.models.course_category_mapping import CourseCategoryMapping
+from app.models.graduation_rule import GraduationRule
+from app.models.required_course import RequiredCourse
+
+
+class CreditCheckRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_student_by_id(self, student_id: str):
+        return (
+            self.db.query(Student)
+            .filter(Student.student_id == student_id)
+            .first()
+        )
+
+    def get_rules_by_admission_year(self, admission_year: int):
+        return (
+            self.db.query(GraduationRule)
+            .filter(GraduationRule.admission_year == admission_year)
+            .all()
+        )
+
+    def get_passed_records_by_category(self, student_id: str, category_id: int):
+        return (
+            self.db.query(StudentCourseRecord)
+            .join(Course, StudentCourseRecord.course_id == Course.course_id)
+            .join(
+                CourseCategoryMapping,
+                Course.course_id == CourseCategoryMapping.course_id
+            )
+            .filter(StudentCourseRecord.student_id == student_id)
+            .filter(StudentCourseRecord.is_passed == True)
+            .filter(CourseCategoryMapping.category_id == category_id)
+            .all()
+        )
+
+    def get_required_courses_by_admission_year(self, admission_year: int):
+        return (
+            self.db.query(RequiredCourse)
+            .filter(RequiredCourse.admission_year == admission_year)
+            .all()
+        )
+
+    def get_passed_course_ids_by_student(self, student_id: str):
+        records = (
+            self.db.query(StudentCourseRecord)
+            .filter(StudentCourseRecord.student_id == student_id)
+            .filter(StudentCourseRecord.is_passed == True)
+            .all()
+        )
+
+        return {record.course_id for record in records}
+
+    def get_category_by_id(self, category_id: int):
+        return (
+            self.db.query(CourseCategory)
+            .filter(CourseCategory.category_id == category_id)
+            .first()
+        )=== ./repositories/course_category_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.course_category import CourseCategory
+
+
+class CourseCategoryRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(CourseCategory).all()
+
+    def get_by_id(self, category_id: int):
+        return (
+            self.db.query(CourseCategory)
+            .filter(CourseCategory.category_id == category_id)
+            .first()
+        )
+
+    def create(self, category: CourseCategory):
+        self.db.add(category)
+        self.db.commit()
+        self.db.refresh(category)
+        return category=== ./repositories/user_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.user import User
+
+
+class UserRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_by_username(self, username: str):
+        return (
+            self.db.query(User)
+            .filter(User.username == username)
+            .first()
+        )
+
+    def get_by_student_id(self, student_id: str):
+        return (
+            self.db.query(User)
+            .filter(User.student_id == student_id)
+            .first()
+        )
+
+    def create(self, user: User):
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user=== ./repositories/student_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.student import Student
+
+
+class StudentRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(Student).all()
+
+    def get_by_id(self, student_id: str):
+        return (
+            self.db.query(Student)
+            .filter(Student.student_id == student_id)
+            .first()
+        )
+
+    def create(self, student: Student):
+        self.db.add(student)
+        self.db.commit()
+        self.db.refresh(student)
+        return student=== ./repositories/course_category_mapping_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.course_category_mapping import CourseCategoryMapping
+
+
+class CourseCategoryMappingRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(CourseCategoryMapping).all()
+
+    def create(self, mapping: CourseCategoryMapping):
+        self.db.add(mapping)
+        self.db.commit()
+        self.db.refresh(mapping)
+        return mapping=== ./repositories/student_course_record_repository.py ===
+from sqlalchemy.orm import Session
+
+from app.models.course import Course
+from app.models.student_course_record import StudentCourseRecord
+
+
+class StudentCourseRecordRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self):
+        return self.db.query(StudentCourseRecord).all()
+
+    def get_by_student_id(self, student_id: str):
+        return (
+            self.db.query(StudentCourseRecord)
+            .filter(StudentCourseRecord.student_id == student_id)
+            .all()
+        )
+
+    def get_course_by_id(self, course_id: str):
+        return (
+            self.db.query(Course)
+            .filter(Course.course_id == course_id)
+            .first()
+        )
+
+    def create_course(self, course: Course):
+        self.db.add(course)
+        self.db.flush()
+        return course
+
+    def create(self, record: StudentCourseRecord):
+        self.db.add(record)
+        self.db.commit()
+        self.db.refresh(record)
+        return record
+
+    def create_many(self, records: list[StudentCourseRecord]):
+        self.db.add_all(records)
+        self.db.commit()
+
+        for record in records:
+            self.db.refresh(record)
+
+        return records=== ./models/user.py ===
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    student_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("students.student_id"),
+        unique=True,
+        nullable=False
+    )
+
+    username: Mapped[str] = mapped_column(
+        String(50),
+        unique=True,
+        nullable=False
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    student = relationship("Student", back_populates="user")
+    
+    
+    === ./models/course.py ===
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
+from app.database import Base
+
+
+class Course(Base):
+    __tablename__ = "courses"
+
+    course_id: Mapped[str] = mapped_column(String(20), primary_key=True, index=True)
+    course_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    credits: Mapped[int] = mapped_column(Integer, nullable=False)
+    taught_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True) #欄位可以是字串，也可以是 None
+
+    student_records = relationship(
+        "StudentCourseRecord",
+        back_populates="course"
+    ) #一門課可以出現在很多學生的修課紀錄中
+
+    category_mappings = relationship(
+        "CourseCategoryMapping",
+        back_populates="course",
+        cascade="all, delete-orphan"
+    ) #如果刪掉某門課，這門課底下的「課程類別對應資料」也會一起刪掉
+
+    required_courses = relationship(
+    "RequiredCourse",
+    back_populates="course",
+    cascade="all, delete-orphan"
+    )=== ./models/__init__.py ===
+from app.models.student import Student
+from app.models.user import User
+from app.models.course import Course
+from app.models.student_course_record import StudentCourseRecord
+from app.models.course_category import CourseCategory
+from app.models.course_category_mapping import CourseCategoryMapping
+from app.models.graduation_rule import GraduationRule
+from app.models.required_course import RequiredCourse=== ./models/graduation_rule.py ===
+from sqlalchemy import ForeignKey, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
+from app.database import Base
+
+
+class GraduationRule(Base):
+    __tablename__ = "graduation_rules"
+
+    rule_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    admission_year: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    category_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("course_categories.category_id"),
+        nullable=False
+    )
+
+    min_courses: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    min_credits: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    category = relationship("CourseCategory", back_populates="graduation_rules")=== ./models/course_category_mapping.py ===
+from sqlalchemy import ForeignKey, Integer,String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class CourseCategoryMapping(Base):
+    __tablename__ = "course_category_mappings"
+
+    course_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("courses.course_id"),
+        primary_key=True
+    )
+
+    category_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("course_categories.category_id"),
+        primary_key=True
+    )
+
+    course = relationship("Course", back_populates="category_mappings")
+    category = relationship("CourseCategory", back_populates="course_mappings")=== ./models/required_course.py ===
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class RequiredCourse(Base):
+    __tablename__ = "required_courses"
+
+    admission_year: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+
+    course_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("courses.course_id"),
+        primary_key=True
+    )
+
+    course = relationship("Course")=== ./models/student.py ===
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class Student(Base):
+    __tablename__ = "students"
+
+    student_id: Mapped[str] = mapped_column(String(20), primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    admission_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    department: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    course_records = relationship(
+        "StudentCourseRecord",
+        back_populates="student",
+        cascade="all, delete-orphan"  #如果某個學生被刪掉，他底下的修課紀錄也會一起被刪掉。
+    )
+
+    user = relationship(
+    "User",
+    back_populates="student",
+    uselist=False,
+    cascade="all, delete-orphan"
+    )=== ./models/course_category.py ===
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
+from app.database import Base
+
+
+class CourseCategory(Base):
+    __tablename__ = "course_categories"
+
+    category_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    main_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    sub_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    course_mappings = relationship(
+        "CourseCategoryMapping",
+        back_populates="category",
+        cascade="all, delete-orphan"
+    )
+
+    graduation_rules = relationship(
+        "GraduationRule",
+        back_populates="category"
+    )=== ./models/student_course_record.py ===
+from sqlalchemy import Boolean, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
+from app.database import Base
+
+
+class StudentCourseRecord(Base):
+    __tablename__ = "student_course_records"
+
+    record_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    student_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("students.student_id"),
+        nullable=False
+    )
+
+    course_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("courses.course_id"),
+        nullable=False
+    )
+
+    semester: Mapped[str] = mapped_column(String(20), nullable=False)
+    grade: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    is_passed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    student = relationship("Student", back_populates="course_records")
+    course = relationship("Course", back_populates="student_records")=== ./schemas/credit_check_schema.py ===
+from pydantic import BaseModel
+from typing import Optional
+
+class CreditCheckRuleResult(BaseModel):
+    rule_id: int
+    category_id: int
+    main_type: str
+    sub_type: Optional[str] = None
+
+    required_courses: Optional[int] = None
+    passed_courses: int
+    missing_courses_count: Optional[int] = None
+
+    required_credits:Optional[int] = None
+    earned_credits: int
+    missing_credits: Optional[int] = None
+
+    is_passed: bool
+
+
+class MissingRequiredCourse(BaseModel):
+    course_id: str
+    course_name: str
+    credits: int
+
+
+class RequiredCourseCheckResult(BaseModel):
+    required_total: int
+    passed_required: int
+    missing_required: int
+    is_passed: bool
+    missing_courses: list[MissingRequiredCourse]
+
+
+class CreditCheckResponse(BaseModel):
+    student_id: str
+    admission_year: int
+    required_course_check: RequiredCourseCheckResult
+    results: list[CreditCheckRuleResult]
+
+
+class CreditCheckSummaryResponse(BaseModel):
+    student_id: str
+    total_rules: int
+    passed_rules: int
+    failed_rules: int
+    progress_percent: float
+    is_graduation_ready: bool=== ./schemas/student_schema.py ===
+from pydantic import BaseModel
+
+
+class StudentCreate(BaseModel):
+    student_id: str
+    name: str
+    admission_year: int
+    department: str
+
+
+class StudentResponse(BaseModel):
+    student_id: str
+    name: str
+    admission_year: int
+    department: str
+
+    class Config:
+        from_attributes = True=== ./schemas/course_schema.py ===
+from pydantic import BaseModel
+from typing import Optional
+
+class CourseCreate(BaseModel):
+    course_id: str
+    course_name: str
+    credits: int
+    taught_by: Optional[str] = None
+
+class CourseResponse(BaseModel):
+    course_id: str
+    course_name: str
+    credits: int
+    taught_by: Optional[str] = None
+
+    class Config:
+        from_attributes = True=== ./schemas/__init__.py ===
+=== ./schemas/recommendation.py ===
+from pydantic import BaseModel
+
+class RecommendedCourse(BaseModel):
+    course_id: str
+    course_name: str
+    category_id: int
+    credits: int
+    peer_pass_rate: float
+    recommendation_score: float=== ./schemas/auth_schema.py ===
+from pydantic import BaseModel
+
+
+class UserRegister(BaseModel):
+    student_id: str
+    username: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"=== ./schemas/course_category_mapping_schema.py ===
+from pydantic import BaseModel
+
+
+class CourseCategoryMappingCreate(BaseModel):
+    course_id: str
+    category_id: int
+
+
+class CourseCategoryMappingResponse(BaseModel):
+    course_id: str
+    category_id: int
+
+    class Config:
+        from_attributes = True=== ./schemas/graduation_rule_schema.py ===
+from pydantic import BaseModel
+from typing import Optional
+
+class GraduationRuleCreate(BaseModel):
+    admission_year: int
+    category_id: int
+    min_courses: Optional[int] = None
+    min_credits: Optional[int] = None
+
+
+class GraduationRuleResponse(BaseModel):
+    rule_id: int
+    admission_year: int
+    category_id: int
+    min_courses: Optional[int] = None
+    min_credits: Optional[int] = None
+
+    class Config:
+        from_attributes = True=== ./schemas/required_course_schema.py ===
+from pydantic import BaseModel
+
+
+class RequiredCourseCreate(BaseModel):
+    admission_year: int
+    course_id: str
+
+
+class RequiredCourseResponse(BaseModel):
+    admission_year: int
+    course_id: str
+
+    class Config:
+        from_attributes = True=== ./schemas/course_category_schema.py ===
+from pydantic import BaseModel
+from typing import Optional
+
+class CourseCategoryCreate(BaseModel):
+    main_type: str
+    sub_type: Optional[str] = None
+
+
+class CourseCategoryResponse(BaseModel):
+    category_id: int
+    main_type: str
+    sub_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True=== ./schemas/student_course_record_schema.py ===
+from pydantic import BaseModel
+from typing import Optional
+
+class StudentCourseRecordCreate(BaseModel):
+    student_id: str
+    course_id: str
+    semester: str
+    grade: Optional[int] = None
+    is_passed: bool = False
+
+
+class StudentCourseRecordResponse(BaseModel):
+    record_id: int
+    student_id: str
+    course_id: str
+    semester: str
+    grade: Optional[int] = None
+    is_passed: bool
+
+    class Config:
+        from_attributes = True=== ./main.py ===
+from fastapi import FastAPI
+
+from app.routers.student_router import router as student_router
+from app.routers.course_router import router as course_router
+from app.routers.student_course_record_router import router as record_router
+from app.routers.course_category_router import router as category_router
+from app.routers.course_category_mapping_router import router as mapping_router
+from app.routers.graduation_rule_router import router as graduation_rule_router
+from app.routers.credit_check_router import router as credit_check_router
+from app.routers.auth_router import router as auth_router
+from app.routers.required_course_router import router as required_course_router
+from app.routers.recommendation_router import router as recommendation_router
+
+app = FastAPI(
+    title="Graduation Credit Verification System",
+    description="畢業學分檢核系統後端 API",
+    version="0.1.0"
+)
+
+
+app.include_router(student_router)
+app.include_router(course_router)
+app.include_router(record_router)
+app.include_router(category_router)
+app.include_router(mapping_router)
+app.include_router(graduation_rule_router)
+app.include_router(credit_check_router)
+app.include_router(auth_router)
+app.include_router(required_course_router)
+
+@app.get("/")
+def root():
+    return {
+        "message": "Graduation Credit Verification System API is running"
+    }=== ./services/course_category_mapping_service.py ===
+from app.models.course_category_mapping import CourseCategoryMapping
+from app.repositories.course_category_mapping_repository import CourseCategoryMappingRepository
+from app.schemas.course_category_mapping_schema import CourseCategoryMappingCreate
+
+
+class CourseCategoryMappingService:
+    def __init__(self, repository: CourseCategoryMappingRepository):
+        self.repository = repository
+
+    def get_all_mappings(self):
+        return self.repository.get_all()
+
+    def create_mapping(self, mapping_data: CourseCategoryMappingCreate):
+        mapping = CourseCategoryMapping(
+            course_id=mapping_data.course_id,
+            category_id=mapping_data.category_id,
+        )
+
+        return self.repository.create(mapping)=== ./services/auth_service.py ===
+from datetime import datetime, timedelta, timezone
+
+from jose import jwt
+from passlib.context import CryptContext
+
+from app.config import settings
+from app.models.user import User
+from app.repositories.student_repository import StudentRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.auth_schema import UserRegister, UserLogin
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+class AuthService:
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        student_repository: StudentRepository
+    ):
+        self.user_repository = user_repository
+        self.student_repository = student_repository
+
+    def hash_password(self, password: str):
+        return pwd_context.hash(password)
+
+    def verify_password(self, plain_password: str, password_hash: str):
+        return pwd_context.verify(plain_password, password_hash)
+
+    def create_access_token(self, data: dict):
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
+        payload = data.copy()
+        payload.update({"exp": expire})
+
+        return jwt.encode(
+            payload,
+            settings.SECRET_KEY,
+            algorithm=settings.ALGORITHM
+        )
+
+    def register(self, register_data: UserRegister):
+        student = self.student_repository.get_by_id(register_data.student_id)
+
+        if student is None:
+            return None, "找不到學生"
+
+        existing_username = self.user_repository.get_by_username(
+            register_data.username
+        )
+
+        if existing_username is not None:
+            return None, "帳號已存在"
+
+        existing_student_user = self.user_repository.get_by_student_id(
+            register_data.student_id
+        )
+
+        if existing_student_user is not None:
+            return None, "此學生已建立帳號"
+
+        user = User(
+            student_id=register_data.student_id,
+            username=register_data.username,
+            password_hash=self.hash_password(register_data.password)
+        )
+
+        created_user = self.user_repository.create(user)
+
+        return created_user, None
+
+    def login(self, login_data: UserLogin):
+        user = self.user_repository.get_by_username(login_data.username)
+
+        if user is None:
+            return None
+
+        if not self.verify_password(login_data.password, user.password_hash):
+            return None
+
+        token = self.create_access_token({
+            "sub": str(user.user_id),
+            "student_id": user.student_id,
+            "username": user.username
+        })
+
+        return token=== ./services/graduation_rule_service.py ===
+from app.models.graduation_rule import GraduationRule
+from app.repositories.graduation_rule_repository import GraduationRuleRepository
+from app.schemas.graduation_rule_schema import GraduationRuleCreate
+
+
+class GraduationRuleService:
+    def __init__(self, repository: GraduationRuleRepository):
+        self.repository = repository
+
+    def get_all_rules(self):
+        return self.repository.get_all()
+
+    def get_rule_by_id(self, rule_id: int):
+        return self.repository.get_by_id(rule_id)
+
+    def get_rules_by_admission_year(self, admission_year: int):
+        return self.repository.get_by_admission_year(admission_year)
+
+    def create_rule(self, rule_data: GraduationRuleCreate):
+        rule = GraduationRule(
+            admission_year=rule_data.admission_year,
+            category_id=rule_data.category_id,
+            min_courses=rule_data.min_courses,
+            min_credits=rule_data.min_credits,
+        )
+
+        return self.repository.create(rule)=== ./services/credit_check_service.py ===
+from app.repositories.credit_check_repository import CreditCheckRepository
+
+
+class CreditCheckService:
+    def __init__(self, repository: CreditCheckRepository):
+        self.repository = repository
+
+    def check_student_graduation(self, student_id: int):
+        student = self.repository.get_student_by_id(student_id)
+
+        if student is None:
+            return None
+
+        rules = self.repository.get_rules_by_admission_year(
+            student.admission_year
+        )
+
+        required_courses = self.repository.get_required_courses_by_admission_year(
+            student.admission_year
+        )
+
+        passed_course_ids = self.repository.get_passed_course_ids_by_student(
+            student.student_id
+        )
+
+        missing_courses = []
+
+        for required_course in required_courses:
+            if required_course.course_id not in passed_course_ids:
+                missing_courses.append({
+                    "course_id": required_course.course.course_id,
+                    "course_name": required_course.course.course_name,
+                    "credits": required_course.course.credits
+                })
+
+        required_course_check = {
+            "required_total": len(required_courses),
+            "passed_required": len(required_courses) - len(missing_courses),
+            "missing_required": len(missing_courses),
+            "is_passed": len(missing_courses) == 0,
+            "missing_courses": missing_courses
+        }
+
+        results = []
+
+        for rule in rules:
+            passed_records = self.repository.get_passed_records_by_category(
+                student_id=student.student_id,
+                category_id=rule.category_id
+            )
+
+            counted_course_ids = set()
+            earned_credits = 0
+
+            for record in passed_records:
+                if record.course_id not in counted_course_ids:
+                    earned_credits += record.course.credits
+                    counted_course_ids.add(record.course_id)
+
+            passed_courses = len(counted_course_ids)
+
+            course_passed = True
+            credit_passed = True
+
+            if rule.min_courses is not None:
+                course_passed = passed_courses >= rule.min_courses
+
+            if rule.min_credits is not None:
+                credit_passed = earned_credits >= rule.min_credits
+
+            category = self.repository.get_category_by_id(rule.category_id)
+
+            missing_courses_count = None
+            missing_credits = None
+
+            if rule.min_courses is not None:
+                missing_courses_count = max(
+                    rule.min_courses - passed_courses,
+                    0
+                )
+
+            if rule.min_credits is not None:
+                missing_credits = max(
+                    rule.min_credits - earned_credits,
+                    0
+                )
+
+            results.append({
+                "rule_id": rule.rule_id,
+                "category_id": rule.category_id,
+                "main_type": category.main_type if category else "未知分類",
+                "sub_type": category.sub_type if category else None,
+
+                "required_courses": rule.min_courses,
+                "passed_courses": passed_courses,
+                "missing_courses_count": missing_courses_count,
+
+                "required_credits": rule.min_credits,
+                "earned_credits": earned_credits,
+                "missing_credits": missing_credits,
+
+                "is_passed": course_passed and credit_passed
+            })
+
+        return {
+            "student_id": student.student_id,
+            "admission_year": student.admission_year,
+            "required_course_check": required_course_check,
+            "results": results
+        }
+
+    def get_graduation_summary(self, student_id: int):
+        check_result = self.check_student_graduation(student_id)
+
+        if check_result is None:
+            return None
+
+        results = check_result["results"]
+        required_course_check = check_result["required_course_check"]
+
+        total_rules = len(results) + 1
+        passed_rules = 0
+
+        if required_course_check["is_passed"]:
+            passed_rules += 1
+
+        for result in results:
+            if result["is_passed"]:
+                passed_rules += 1
+
+        failed_rules = total_rules - passed_rules
+        progress_percent = round((passed_rules / total_rules) * 100, 2)
+
+        return {
+            "student_id": check_result["student_id"],
+            "total_rules": total_rules,
+            "passed_rules": passed_rules,
+            "failed_rules": failed_rules,
+            "progress_percent": progress_percent,
+            "is_graduation_ready": failed_rules == 0
+        }=== ./services/course_category_service.py ===
+from app.models.course_category import CourseCategory
+from app.repositories.course_category_repository import CourseCategoryRepository
+from app.schemas.course_category_schema import CourseCategoryCreate
+
+
+class CourseCategoryService:
+    def __init__(self, repository: CourseCategoryRepository):
+        self.repository = repository
+
+    def get_all_categories(self):
+        return self.repository.get_all()
+
+    def get_category_by_id(self, category_id: int):
+        return self.repository.get_by_id(category_id)
+
+    def create_category(self, category_data: CourseCategoryCreate):
+        category = CourseCategory(
+            main_type=category_data.main_type,
+            sub_type=category_data.sub_type,
+        )
+
+        return self.repository.create(category)=== ./services/__init__.py ===
+=== ./services/course_service.py ===
+from app.models.course import Course
+from app.repositories.course_repository import CourseRepository
+from app.schemas.course_schema import CourseCreate
+
+
+class CourseService:
+    def __init__(self, repository: CourseRepository):
+        self.repository = repository
+
+    def get_all_courses(self):
+        return self.repository.get_all()
+
+    def get_course_by_id(self, course_id: str):
+        return self.repository.get_by_id(course_id)
+
+    def create_course(self, course_data: CourseCreate):
+        course = Course(
+            course_id=course_data.course_id,
+            course_name=course_data.course_name,
+            credits=course_data.credits,
+            taught_by=course_data.taught_by,
+        )
+
+        return self.repository.create(course)=== ./services/student_service.py ===
+from app.models.student import Student
+from app.repositories.student_repository import StudentRepository
+from app.schemas.student_schema import StudentCreate
+
+
+class StudentService:
+    def __init__(self, repository: StudentRepository):
+        self.repository = repository
+
+    def get_all_students(self):
+        return self.repository.get_all()
+
+    def get_student_by_id(self, student_id: str):
+        return self.repository.get_by_id(student_id)
+
+    def create_student(self, student_data: StudentCreate):
+        student = Student(
+            student_id=student_data.student_id,
+            name=student_data.name,
+            admission_year=student_data.admission_year,
+            department=student_data.department,
+        )
+
+        return self.repository.create(student)=== ./services/recommendation_service.py ===
+from sqlalchemy.orm import Session
+from sqlalchemy import select, func, Integer
+from typing import List
+from app.models.student import Student
+from app.models.student_course_record import StudentCourseRecord
+from app.models.course import Course
+from app.models.course_category_mapping import CourseCategoryMapping
+from app.models.graduation_rule import GraduationRule
+from app.schemas.recommendation import RecommendedCourse
+
+class RecommendationService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_recommendations(self, student_id: str) -> List[RecommendedCourse]:
+        # 1. 取得學生入學年份
+        student = self.db.scalars(
+            select(Student).where(Student.student_id == student_id)
+        ).first()
+        if not student:
+            return []
+
+        # 2. 找出學生「已通過」的各類別學分總和
+        passed_credits = self.db.execute(
+            select(
+                CourseCategoryMapping.category_id,
+                func.sum(Course.credits).label("earned_credits")
+            )
+            .join(StudentCourseRecord, StudentCourseRecord.course_id == CourseCategoryMapping.course_id)
+            .join(Course, Course.course_id == CourseCategoryMapping.course_id)
+            .where(
+                StudentCourseRecord.student_id == student_id,
+                StudentCourseRecord.is_passed == True
+            )
+            .group_by(CourseCategoryMapping.category_id)
+        ).all()
+        earned_dict = {row.category_id: row.earned_credits for row in passed_credits}
+
+        # 3. 比對畢業規則，找出「缺漏學分」的類別
+        rules = self.db.scalars(
+            select(GraduationRule).where(GraduationRule.admission_year == student.admission_year)
+        ).all()
+        
+        missing_categories = []
+        for rule in rules:
+            earned = earned_dict.get(rule.category_id, 0)
+            if rule.min_credits and earned < rule.min_credits: #如果不符合畢業條件
+                missing_categories.append(rule.category_id)
+
+        if not missing_categories:
+            return [] # 已滿足畢業條件
+
+        # 4. 計算所有課程的同儕通過率 (通過人數 / 總修課人數)
+        peer_stats = self.db.execute(
+            select(
+                StudentCourseRecord.course_id,
+                func.count(StudentCourseRecord.record_id).label("total_attempts"),
+                func.sum(func.cast(StudentCourseRecord.is_passed, Integer)).label("passed_attempts")
+            )
+            .group_by(StudentCourseRecord.course_id)
+        ).all()
+        
+        # 建立通過率對照表
+        pass_rate_map = {}
+        for stat in peer_stats:
+            rate = (stat.passed_attempts / stat.total_attempts) if stat.total_attempts > 0 else 0
+            pass_rate_map[stat.course_id] = round(rate, 2)
+
+        # 5. 撈出符合缺漏類別，且學生尚未通過的候選課程
+        already_passed_subquery = select(StudentCourseRecord.course_id).where(
+            StudentCourseRecord.student_id == student_id,
+            StudentCourseRecord.is_passed == True
+        )
+
+        candidate_courses = self.db.execute(
+            select(Course, CourseCategoryMapping.category_id)
+            .join(CourseCategoryMapping, CourseCategoryMapping.course_id == Course.course_id)
+            .where(
+                CourseCategoryMapping.category_id.in_(missing_categories),
+                Course.course_id.not_in(already_passed_subquery)
+            )
+        ).all()
+
+        # 6. 計算最終推薦權重並排序
+        recommendations = []
+        for course, category_id in candidate_courses:
+            peer_rate = pass_rate_map.get(course.course_id, 0.5) # 若無人修過，預設給予 0.5
+            
+            # 將通過率轉換為 1 (爽課) 或 0 (硬課)
+            score = self._calculate_weight(peer_rate)
+
+            recommendations.append(
+                RecommendedCourse(
+                    course_id=course.course_id,
+                    course_name=course.course_name,
+                    category_id=category_id,
+                    credits=course.credits,
+                    peer_pass_rate=peer_rate,
+                    recommendation_score=score
+                )
+            )
+
+        # 雙重條件排序：
+        # 條件一：-x.recommendation_score (把 1 變成 -1, 0 變成 0。-1 排在 0 前面，確保爽課在上)
+        # 條件二：x.course_id (若同為爽課或同為硬課，則依照課號 A-Z 或數字由小到大排列)
+        recommendations.sort(key=lambda x: (-x.recommendation_score, x.course_id))
+        
+        return recommendations
+
+    def _calculate_weight(self, pass_rate: float) -> float:
+        """
+        獨立的權重計算模組：
+        若通過率 >= 60% (0.6)，判定為爽課 (1)
+        若通過率 < 60%，判定為硬課 (0)
+        """
+        return 1.0 if pass_rate >= 0.6 else 0.0=== ./services/student_course_record_service.py ===
+import json
+
+from app.models.course import Course
+from app.models.student_course_record import StudentCourseRecord
+from app.repositories.student_course_record_repository import StudentCourseRecordRepository
+from app.schemas.student_course_record_schema import StudentCourseRecordCreate
+
+
+class StudentCourseRecordService:
+    def __init__(self, repository: StudentCourseRecordRepository):
+        self.repository = repository
+
+    def get_all_records(self):
+        return self.repository.get_all()
+
+    def get_records_by_student_id(self, student_id: int):
+        return self.repository.get_by_student_id(student_id)
+
+    def create_record(self, record_data: StudentCourseRecordCreate):
+        record = StudentCourseRecord(
+            student_id=record_data.student_id,
+            course_id=record_data.course_id,
+            semester=record_data.semester,
+            grade=record_data.grade,
+            is_passed=record_data.is_passed,
+        )
+
+        return self.repository.create(record)
+
+    def parse_score(self, score_text: str):
+        """
+        將學校 JSON 裡的 score 轉成整數成績。
+        如果是「停修」或「成績未到或無成績」，就回傳 None。
+        """
+        try:
+            return int(float(score_text))
+        except (ValueError, TypeError):
+            return None
+
+    def is_course_passed(self, score_text: str, score_if_pass: str):
+        """
+        判斷是否通過課程。
+        目前規則：
+        1. scoreIfPass == "No" → 不通過
+        2. score 可以轉成數字且 >= 60 → 通過
+        3. 停修 / 成績未到 / 無法轉數字 → 不通過
+        """
+        if score_if_pass == "No":
+            return False
+
+        score = self.parse_score(score_text)
+
+        if score is None:
+            return False
+
+        return score >= 60
+
+    def parse_school_json_records(self, json_content: str):
+        """
+        解析學校匯出的 JSON，只抓我們需要的 GradeRecords。
+        """
+        data = json.loads(json_content)
+
+        learning_data = data[0]["課業學習"]
+        grade_record_list = learning_data["gradeRecordList"]
+
+        parsed_records = []
+
+        for year_block in grade_record_list:
+            grade_records = year_block["GradeRecords"]
+
+            for item in grade_records:
+                parsed_records.append({
+                    "course_id": item["courseCode"],
+                    "course_name": item["courseName"],
+                    "credits": int(float(item["credit"])),
+                    "semester": item["academicYearSemester"],
+                    "grade": self.parse_score(item["score"]),
+                    "is_passed": self.is_course_passed(
+                        score_text=item["score"],
+                        score_if_pass=item.get("scoreIfPass", "")
+                    )
+                })
+
+        return parsed_records
+    
+
+    def upload_records_from_school_json(self, student_id: str, json_content: str):
+        parsed_records = self.parse_school_json_records(json_content)
+
+        records = []
+
+        for item in parsed_records:
+            course = self.repository.get_course_by_id(item["course_id"])
+
+            if course is None:
+                course = Course(
+                    course_id=item["course_id"],
+                    course_name=item["course_name"],
+                    credits=item["credits"],
+                    taught_by=None
+                )
+
+                self.repository.create_course(course)
+
+            record = StudentCourseRecord(
+                student_id=student_id,
+                course_id=item["course_id"],
+                semester=item["semester"],
+                grade=item["grade"],
+                is_passed=item["is_passed"]
+            )
+
+            records.append(record)
+
+        created_records = self.repository.create_many(records)
+
+        return created_records, None=== ./services/course_category_mapping_router.py ===
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.course_category_mapping_repository import CourseCategoryMappingRepository
+from app.schemas.course_category_mapping_schema import (
+    CourseCategoryMappingCreate,
+    CourseCategoryMappingResponse,
+)
+from app.services.course_category_mapping_service import CourseCategoryMappingService
+
+
+router = APIRouter(
+    prefix="/course-category-mappings",
+    tags=["Course Category Mappings"]
+)
+
+
+def get_mapping_service(db: Session = Depends(get_db)):
+    repository = CourseCategoryMappingRepository(db)
+    return CourseCategoryMappingService(repository)
+
+
+@router.get("/", response_model=list[CourseCategoryMappingResponse])
+def get_mappings(service: CourseCategoryMappingService = Depends(get_mapping_service)):
+    return service.get_all_mappings()
+
+
+@router.post("/", response_model=CourseCategoryMappingResponse)
+def create_mapping(
+    mapping_data: CourseCategoryMappingCreate,
+    service: CourseCategoryMappingService = Depends(get_mapping_service)
+):
+    return service.create_mapping(mapping_data)=== ./services/required_course_service.py ===
+from app.models.required_course import RequiredCourse
+from app.repositories.required_course_repository import RequiredCourseRepository
+from app.schemas.required_course_schema import RequiredCourseCreate
+
+
+class RequiredCourseService:
+    def __init__(self, repository: RequiredCourseRepository):
+        self.repository = repository
+
+    def get_all_required_courses(self):
+        return self.repository.get_all()
+
+    def get_required_courses_by_admission_year(self, admission_year: int):
+        return self.repository.get_by_admission_year(admission_year)
+
+    def create_required_course(self, required_course_data: RequiredCourseCreate):
+        required_course = RequiredCourse(
+            admission_year=required_course_data.admission_year,
+            course_id=required_course_data.course_id
+        )
+
+        return self.repository.create(required_course)

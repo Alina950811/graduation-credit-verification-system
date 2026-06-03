@@ -1,0 +1,6 @@
+{
+  "name": "Graduation Credit Verification System",
+  "description": "Graduation progress tracking, CSV custom uploads, rule validation dashboard, course recommendations and classroom warning system for university students.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
