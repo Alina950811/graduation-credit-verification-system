@@ -62,7 +62,7 @@ const resolveCourseDetails = async () => {
     ]);
 
     const courses = coursesRes.data;
-    const categories = new Map<number, string>(categoriesRes.data.map((c: any) => [c.category_id, c.main_type]));
+    const categories = new Map<number, string>(categoriesRes.data.map((c: any) => [c.category_id, c.sub_type || c.main_type]));
     const mappings = mappingsRes.data;
 
     const courseCatMap = new Map<string, string>(
@@ -73,11 +73,11 @@ const resolveCourseDetails = async () => {
       const backendType = courseCatMap.get(c.course_id) || '選修';
       let type: 'required' | 'elective' | 'general' | 'pe' | 'english' = 'elective';
       
-      if (backendType === '必修' || backendType === 'required') type = 'required';
-      else if (backendType === '選修' || backendType === 'elective') type = 'elective';
-      else if (backendType === '通識' || backendType === 'general') type = 'general';
-      else if (backendType === '體育' || backendType === 'pe') type = 'pe';
-      else if (backendType === '英文' || backendType === 'english') type = 'english';
+      if (backendType.includes('必修') || backendType === 'required') type = 'required';
+      else if (backendType.includes('選修') || backendType === 'elective') type = 'elective';
+      else if (backendType.includes('通識') || backendType === 'general') type = 'general';
+      else if (backendType.includes('體育') || backendType === 'pe') type = 'pe';
+      else if (backendType.includes('英文') || backendType === 'english') type = 'english';
 
       courseDetailsMap.set(c.course_id, {
         name: c.course_name,
