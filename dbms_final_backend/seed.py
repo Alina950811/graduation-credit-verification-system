@@ -22,6 +22,19 @@ def seed():
 
     db: Session = SessionLocal()
     try:
+        # Clear existing data to allow full reset and clean state
+        print("Clearing existing data from tables...")
+        db.query(StudentCourseRecord).delete()
+        db.query(CourseCategoryMapping).delete()
+        db.query(RequiredCourse).delete()
+        db.query(GraduationRule).delete()
+        db.query(CourseCategory).delete()
+        db.query(User).delete()
+        db.query(Student).delete()
+        db.query(Course).delete()
+        db.commit()
+        print("Data cleared successfully.")
+
         # 1. Seed Student Profile
         student_id = "110306078"
         student = db.query(Student).filter(Student.student_id == student_id).first()
