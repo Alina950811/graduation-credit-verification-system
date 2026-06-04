@@ -68,6 +68,77 @@ export default function Dashboard() {
   const genPercent = Math.min(100, Math.round((dashboard.categoryProgress.general.completed / dashboard.categoryProgress.general.target) * 100));
   const pePercent = Math.min(100, Math.round((dashboard.categoryProgress.pe.completed / dashboard.categoryProgress.pe.target) * 100));
 
+  // Dynamically calculate graduation risk alerts based on backend credit-check results
+  const alertsList = [];
+
+  // 1. Required courses missing
+  if (dashboard.missingRequiredCount > 0) {
+    alertsList.push({
+      id: 'required-missing',
+      type: 'danger',
+      title: `系必修學科欠修 (${dashboard.missingRequiredCount} 門)`,
+      description: `系統未偵測到以下必修學科的通過紀錄：${dashboard.missingRequiredCourses && dashboard.missingRequiredCourses.length > 0 ? dashboard.missingRequiredCourses.map(name => `【${name}】`).join('、') : "計算機網路、編譯器設計"}，極容易遭遇延畢。`,
+      link: '/recommendations',
+      linkText: '看推薦安排補修 →',
+      icon: 'shield-alert'
+    });
+  }
+
+  // 2. General credits missing
+  const missingGeneral = dashboard.categoryProgress.general.target - dashboard.categoryProgress.general.completed;
+  if (missingGeneral > 0) {
+    alertsList.push({
+      id: 'general-missing',
+      type: 'warning',
+      title: `通識學分不足 (缺 ${missingGeneral} 學分)`,
+      description: `政大最低要求 ${dashboard.categoryProgress.general.target} 通識學分，目前已修 ${dashboard.categoryProgress.general.completed} 學分，尚缺 ${missingGeneral} 學分。`,
+      link: '/courses',
+      linkText: '查看已修通識科目 →',
+      icon: 'alert-triangle'
+    });
+  }
+
+  // 3. Elective credits missing
+  const missingElective = dashboard.categoryProgress.elective.target - dashboard.categoryProgress.elective.completed;
+  if (missingElective > 0) {
+    alertsList.push({
+      id: 'elective-missing',
+      type: 'warning',
+      title: `專業選修學分不足 (缺 ${missingElective} 學分)`,
+      description: `畢業規範要求至少 ${dashboard.categoryProgress.elective.target} 專業選修學分，您目前已修得 ${dashboard.categoryProgress.elective.completed} 學分，尚缺 ${missingElective} 學分。`,
+      link: '/courses',
+      linkText: '查看專業選修紀錄 →',
+      icon: 'alert-triangle'
+    });
+  }
+
+  // 4. PE semesters missing
+  const missingPe = dashboard.categoryProgress.pe.target - dashboard.categoryProgress.pe.completed;
+  if (missingPe > 0) {
+    alertsList.push({
+      id: 'pe-missing',
+      type: 'warning',
+      title: `體育必修學期不足 (缺 ${missingPe} 學期)`,
+      description: `體育需修滿 ${dashboard.categoryProgress.pe.target} 學期，目前僅修 ${dashboard.categoryProgress.pe.completed} 學期。`,
+      link: '/check',
+      linkText: '檢視體育畢業規則 →',
+      icon: 'alert-triangle'
+    });
+  }
+
+  // 5. English proficiency not passed
+  if (!dashboard.categoryProgress.english.completed) {
+    alertsList.push({
+      id: 'english-pending',
+      type: 'danger',
+      title: '英文檢定門檻未通過',
+      description: '外文英檢畢業門檻尚未通過。請盡速提交 TOEIC 785 分以上或同等英檢證明，或於大四修讀英文學分班。',
+      link: '/check',
+      linkText: '查看英檢檢定細則 →',
+      icon: 'shield-alert'
+    });
+  }
+
   return (
     <div className="space-y-8">
       
@@ -309,33 +380,47 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold uppercase tracking-widest text-[#1E3A5F]">系統重點風險預警</h3>
-              <span className="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded font-bold">
-                {dashboard.missingRequiredCount > 0 ? "1" : "0"} 項待辦
+              <span className={`text-xs px-2.5 py-0.5 rounded font-bold ${
+                alertsList.length > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                {alertsList.length} 項待辦
               </span>
             </div>
 
             <div className="space-y-3">
               
-              {dashboard.missingRequiredCount > 0 ? (
-                /* Alert item 1 */
-                <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100 flex gap-2.5 animate-slide-in">
-                  <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-extrabold text-slate-800">
-                      系必修學科欠修 ({dashboard.missingRequiredCount} 門)
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                      系統未偵測到以下必修學科的通過紀錄：{dashboard.missingRequiredCourses && dashboard.missingRequiredCourses.length > 0 ? dashboard.missingRequiredCourses.map(name => `【${name}】`).join('、') : "計算機網路、編譯器設計"}，極容易遭遇延畢。
-                    </p>
-                    <Link to="/recommendations" className="text-[11px] text-[#1E3A5F] font-bold hover:underline block mt-1">
-                      看推薦安排補修 →
-                    </Link>
+              {alertsList.length > 0 ? (
+                alertsList.map((alert) => (
+                  <div 
+                    key={alert.id} 
+                    className={`p-3 rounded-xl border flex gap-2.5 animate-slide-in ${
+                      alert.type === 'danger' 
+                        ? 'bg-rose-50/50 border-rose-100' 
+                        : 'bg-amber-50/50 border-amber-100'
+                    }`}
+                  >
+                    {alert.icon === 'shield-alert' ? (
+                      <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <h4 className="text-xs font-extrabold text-slate-800">{alert.title}</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                        {alert.description}
+                      </p>
+                      <Link to={alert.link} className={`text-[11px] font-bold block mt-1 ${
+                        alert.type === 'danger' ? 'text-rose-700 hover:text-rose-900' : 'text-amber-800 hover:text-amber-950'
+                      }`}>
+                        {alert.linkText}
+                      </Link>
+                    </div>
                   </div>
-                </div>
+                ))
               ) : (
                 <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 flex gap-2.5 items-center justify-center text-emerald-800 animate-fade-in">
                   <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <span className="text-xs font-bold text-center">恭喜！您已修畢所有核心系必修課程，目前無任何待辦預警。</span>
+                  <span className="text-xs font-bold text-center">恭喜！您已完成所有畢業與學分門檻要求，目前無任何待辦預警。</span>
                 </div>
               )}
 
