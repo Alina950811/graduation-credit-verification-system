@@ -234,7 +234,9 @@ export default function Dashboard() {
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-indigo-600 h-full rounded-full transition-all duration-500" style={{ width: `${reqPercent}%` }}></div>
               </div>
-              <p className="text-xs text-slate-400">指標 58 學分是資科系核心，尚差 6 學分即告修滿。</p>
+              <p className="text-xs text-slate-400">
+                指標 58 學分是資科系核心。{dashboard.categoryProgress.required.completed >= 58 ? "已全數修滿！" : `尚差 ${58 - dashboard.categoryProgress.required.completed} 學分修滿。`}
+              </p>
             </div>
 
             {/* Category 2: 系選修 */}
@@ -249,7 +251,9 @@ export default function Dashboard() {
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-emerald-600 h-full rounded-full transition-all duration-500" style={{ width: `${elecPercent}%` }}></div>
               </div>
-              <p className="text-xs text-slate-400">已獲 24 學分（通過 8 科），已安全達標。（多修 6 學分得充抵最低畢業總分）</p>
+              <p className="text-xs text-slate-400">
+                已獲 {dashboard.categoryProgress.elective.completed} 學分。{dashboard.categoryProgress.elective.completed >= 18 ? "已安全達標！" : `尚選修課程，累計不達指標 18 學分，尚缺 ${18 - dashboard.categoryProgress.elective.completed} 學分。`}
+              </p>
             </div>
 
             {/* Category 3: 通識 */}
@@ -264,7 +268,9 @@ export default function Dashboard() {
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${genPercent}%` }}></div>
               </div>
-              <p className="text-xs text-slate-400">政大最低需求 28 通識學分，目前已修 26 學分，尚缺最後一門 2 學分課。</p>
+              <p className="text-xs text-slate-400">
+                政大最低需求 28 通識學分，目前已修 {dashboard.categoryProgress.general.completed} 學分。{dashboard.categoryProgress.general.completed >= 28 ? "已全數修滿！" : `尚缺 ${28 - dashboard.categoryProgress.general.completed} 學分通識課程。`}
+              </p>
             </div>
 
             {/* Category 4: 體育 */}
@@ -279,7 +285,9 @@ export default function Dashboard() {
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-cyan-600 h-full rounded-full transition-all duration-500" style={{ width: `${pePercent}%` }}></div>
               </div>
-              <p className="text-xs text-slate-400">體育修滿 4 個學期即可通過毕业体育門檻，指標滿值。</p>
+              <p className="text-xs text-slate-400">
+                體育修滿 4 個學期即可通過畢業體育門檻。目前已修 {dashboard.categoryProgress.pe.completed} / 4 學期。
+              </p>
             </div>
 
             {/* Category 5: 英文檢定 */}
@@ -301,24 +309,35 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold uppercase tracking-widest text-[#1E3A5F]">系統重點風險預警</h3>
-              <span className="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded font-bold">1 項待辦</span>
+              <span className="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded font-bold">
+                {dashboard.missingRequiredCount > 0 ? "1" : "0"} 項待辦
+              </span>
             </div>
 
             <div className="space-y-3">
               
-              {/* Alert item 1 */}
-              <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100 flex gap-2.5">
-                <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-800">系必修學科欠修 (2 門)</h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    大三必修之「計算機網路」及「編譯器設計」至今尚未偵測到通過記錄，極容易遭遇延畢。
-                  </p>
-                  <Link to="/recommendations" className="text-[11px] text-[#1E3A5F] font-bold hover:underline block mt-1">
-                    看推薦安排補修 →
-                  </Link>
+              {dashboard.missingRequiredCount > 0 ? (
+                /* Alert item 1 */
+                <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100 flex gap-2.5 animate-slide-in">
+                  <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-extrabold text-slate-800">
+                      系必修學科欠修 ({dashboard.missingRequiredCount} 門)
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                      系統未偵測到以下必修學科的通過紀錄：{dashboard.missingRequiredCourses && dashboard.missingRequiredCourses.length > 0 ? dashboard.missingRequiredCourses.map(name => `【${name}】`).join('、') : "計算機網路、編譯器設計"}，極容易遭遇延畢。
+                    </p>
+                    <Link to="/recommendations" className="text-[11px] text-[#1E3A5F] font-bold hover:underline block mt-1">
+                      看推薦安排補修 →
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 flex gap-2.5 items-center justify-center text-emerald-800 animate-fade-in">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span className="text-xs font-bold text-center">恭喜！您已修畢所有核心系必修課程，目前無任何待辦預警。</span>
+                </div>
+              )}
 
             </div>
           </div>

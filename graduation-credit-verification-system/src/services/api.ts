@@ -180,6 +180,8 @@ export const graduationService = {
       english: { completed: englishPassed, target: "TOEIC 785 or equivalent" }
     };
 
+    const missingCourses = creditCheck.required_course_check.missing_courses.map((c: any) => c.course_name);
+
     const dashboard = {
       studentName: student.name,
       studentId: student.student_id,
@@ -189,6 +191,7 @@ export const graduationService = {
       totalCompletedCredits: totalCompleted,
       missingCredits: Math.max(0, totalRequired - totalCompleted),
       missingRequiredCount: creditCheck.required_course_check.missing_required,
+      missingRequiredCourses: missingCourses,
       categoryProgress
     };
 
