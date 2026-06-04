@@ -320,7 +320,7 @@ export default function Dashboard() {
                 <div className="bg-indigo-600 h-full rounded-full transition-all duration-500" style={{ width: `${reqPercent}%` }}></div>
               </div>
               <p className="text-xs text-slate-400">
-                指標 58 學分是資科系核心。{dashboard.categoryProgress.required.completed >= 58 ? "已全數修滿！" : `尚差 ${58 - dashboard.categoryProgress.required.completed} 學分修滿。`}
+                指標 {dashboard.categoryProgress.required.target} 學分是資科系核心。{dashboard.categoryProgress.required.completed >= dashboard.categoryProgress.required.target ? "已全數修滿！" : `尚差 ${dashboard.categoryProgress.required.target - dashboard.categoryProgress.required.completed} 學分修滿。`}
               </p>
             </div>
 
@@ -337,7 +337,7 @@ export default function Dashboard() {
                 <div className="bg-emerald-600 h-full rounded-full transition-all duration-500" style={{ width: `${elecPercent}%` }}></div>
               </div>
               <p className="text-xs text-slate-400">
-                已獲 {dashboard.categoryProgress.elective.completed} 學分。{dashboard.categoryProgress.elective.completed >= 18 ? "已安全達標！" : `尚選修課程，累計不達指標 18 學分，尚缺 ${18 - dashboard.categoryProgress.elective.completed} 學分。`}
+                已獲 {dashboard.categoryProgress.elective.completed} 學分。{dashboard.categoryProgress.elective.completed >= dashboard.categoryProgress.elective.target ? "已安全達標！" : `尚需選修課程，累計不達指標 ${dashboard.categoryProgress.elective.target} 學分，尚缺 ${dashboard.categoryProgress.elective.target - dashboard.categoryProgress.elective.completed} 學分。`}
               </p>
             </div>
 
@@ -354,7 +354,7 @@ export default function Dashboard() {
                 <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${genPercent}%` }}></div>
               </div>
               <p className="text-xs text-slate-400">
-                政大最低需求 28 通識學分，目前已修 {dashboard.categoryProgress.general.completed} 學分。{dashboard.categoryProgress.general.completed >= 28 ? "已全數修滿！" : `尚缺 ${28 - dashboard.categoryProgress.general.completed} 學分通識課程。`}
+                最低需求 {dashboard.categoryProgress.general.target} 通識學分，目前已修 {dashboard.categoryProgress.general.completed} 學分。{dashboard.categoryProgress.general.completed >= dashboard.categoryProgress.general.target ? "已全數修滿！" : `尚缺 ${dashboard.categoryProgress.general.target - dashboard.categoryProgress.general.completed} 學分通識課程。`}
               </p>
             </div>
 
@@ -371,7 +371,7 @@ export default function Dashboard() {
                 <div className="bg-cyan-600 h-full rounded-full transition-all duration-500" style={{ width: `${pePercent}%` }}></div>
               </div>
               <p className="text-xs text-slate-400">
-                體育修滿 4 個學期即可通過畢業體育門檻。目前已修 {dashboard.categoryProgress.pe.completed} / 4 學期。
+                體育修滿 {dashboard.categoryProgress.pe.target} 個學期即可通過畢業體育門檻。目前已修 {dashboard.categoryProgress.pe.completed} / {dashboard.categoryProgress.pe.target} 學期。
               </p>
             </div>
 

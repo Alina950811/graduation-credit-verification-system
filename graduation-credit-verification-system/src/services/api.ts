@@ -172,12 +172,31 @@ export const graduationService = {
     const totalCompleted = completedRequired + completedElective + completedGeneral;
     const totalRequired = 128;
 
+    let requiredTarget = 58;
+    let electiveTarget = 18;
+    let generalTarget = 28;
+    let peTarget = 4;
+    let englishTarget = "TOEIC 785 or equivalent";
+
+    creditCheck.results.forEach((res: any) => {
+      const typeLabel = (res.sub_type || res.main_type || '').toLowerCase();
+      if (typeLabel.includes('必修')) {
+        requiredTarget = res.required_credits || requiredTarget;
+      } else if (typeLabel.includes('選修')) {
+        electiveTarget = res.required_credits || electiveTarget;
+      } else if (typeLabel.includes('通識')) {
+        generalTarget = res.required_credits || generalTarget;
+      } else if (typeLabel.includes('體育')) {
+        peTarget = res.required_courses || peTarget;
+      }
+    });
+
     const categoryProgress = {
-      required: { completed: completedRequired, target: 58 },
-      elective: { completed: completedElective, target: 18 },
-      general: { completed: completedGeneral, target: 28 },
-      pe: { completed: completedPe, target: 4 },
-      english: { completed: englishPassed, target: "TOEIC 785 or equivalent" }
+      required: { completed: completedRequired, target: requiredTarget },
+      elective: { completed: completedElective, target: electiveTarget },
+      general: { completed: completedGeneral, target: generalTarget },
+      pe: { completed: completedPe, target: peTarget },
+      english: { completed: englishPassed, target: englishTarget }
     };
 
     const missingCourses = creditCheck.required_course_check.missing_courses.map((c: any) => c.course_name);
@@ -300,91 +319,118 @@ export const graduationService = {
     const creditCheck = creditCheckRes.data;
     const rules: GradRule[] = [];
 
+    // Helper to find a specific category check result from backend response
+    const findResult = (keyword: string) => {
+      if (!creditCheck.results) return undefined;
+      return creditCheck.results.find((res: any) => {
+        const label = (res.sub_type || res.main_type || '').toLowerCase();
+        return label.includes(keyword);
+      });
+    };
+
+    const reqResult = findResult("必修");
+    const eleResult = findResult("選修");
+    const genResult = findResult("通識");
+    const peResult = findResult("體育");
+
     // 1. Required Course Rule
     const reqCheck = creditCheck.required_course_check;
     const missingCompulsoryNames = reqCheck.missing_courses.map((c: any) => `【${c.course_name}】`).join('、');
+    const reqTarget = dashboard.categoryProgress.required.target;
+    const reqCompleted = dashboard.categoryProgress.required.completed;
     rules.push({
       id: "r1",
       name: "系必修課程全數通過",
       type: "Major Required",
-      required: "58 學分 (全數修畢)",
-      completed: `${dashboard.categoryProgress.required.completed} 學分`,
-      progress: Math.round((dashboard.categoryProgress.required.completed / 58) * 100),
-      status: reqCheck.is_passed ? "completed" : (dashboard.categoryProgress.required.completed > 40 ? "warning" : "failed"),
+      required: `${reqTarget} 學分 (全數修畢)`,
+      completed: `${reqCompleted} 學分`,
+      progress: Math.min(100, Math.round((reqCompleted / reqTarget) * 100)),
+      status: reqCheck.is_passed ? "completed" : (reqCompleted > (reqTarget * 0.7) ? "warning" : "failed"),
       details: reqCheck.is_passed 
         ? "已修畢所有核心系必修課程" 
         : `尚缺：${missingCompulsoryNames} 未修（計 ${reqCheck.missing_required * 3} 學分）`
     });
 
-    // 2. Loop other rules from backend response
-    creditCheck.results.forEach((res: any) => {
-      if (res.main_type === "選修") {
-        rules.push({
-          id: "r2",
-          name: "專業選修學分門檻",
-          type: "Major Elective",
-          required: ">= 18 學分",
-          completed: `${res.earned_credits} 學分`,
-          progress: Math.min(100, Math.round((res.earned_credits / 18) * 100)),
-          status: res.is_passed ? "completed" : "failed",
-          details: res.is_passed 
-            ? `已修畢學分達到選修標準，累計超出 ${res.earned_credits - 18} 學分`
-            : `尚選修課程，累計不達指標 18 學分，尚缺 ${res.missing_credits} 學分`
-        });
-      } else if (res.main_type === "通識") {
-        rules.push({
-          id: "r3",
-          name: "通識學分門檻",
-          type: "General Education",
-          required: ">= 28 學分",
-          completed: `${res.earned_credits} 學分`,
-          progress: Math.min(100, Math.round((res.earned_credits / 28) * 100)),
-          status: res.is_passed ? "completed" : (res.earned_credits >= 24 ? "warning" : "failed"),
-          details: res.is_passed 
-            ? "已修滿 28 學分通識課程" 
-            : `尚缺 ${res.missing_credits} 學分通識主線學科`
-        });
-      } else if (res.main_type === "體育") {
-        rules.push({
-          id: "r4",
-          name: "體育 4 學期",
-          type: "Physical Education",
-          required: "4 學期必修",
-          completed: `${res.passed_courses} 學期`,
-          progress: Math.min(100, Math.round((res.passed_courses / 4) * 100)),
-          status: res.is_passed ? "completed" : "failed",
-          details: res.is_passed 
-            ? "已通過 4 學期體育必修課程" 
-            : `體育學期數不夠（已修 ${res.passed_courses}/4 學期）`
-        });
-      } else if (res.main_type === "英文") {
-        rules.push({
-          id: "r5",
-          name: "英文能力檢定門檻",
-          type: "Language Proficiency",
-          required: "TOEIC 785 分以上",
-          completed: res.is_passed ? "已通過 English 門檻" : "TOEIC 710 分 (未通過)",
-          progress: res.is_passed ? 100 : 0,
-          status: res.is_passed ? "completed" : "failed",
-          details: res.is_passed 
-            ? "已通過外文英檢畢業門檻" 
-            : "英文門檻未完成。需上傳符合之檢定證明，或於最後學年修讀並通過【進階英文學分班】"
-        });
-      }
+    // 2. Major Elective
+    const eleTarget = dashboard.categoryProgress.elective.target;
+    const eleCompleted = dashboard.categoryProgress.elective.completed;
+    const isElePassed = eleResult ? eleResult.is_passed : eleCompleted >= eleTarget;
+    rules.push({
+      id: "r2",
+      name: "專業選修學分門檻",
+      type: "Major Elective",
+      required: `>= ${eleTarget} 學分`,
+      completed: `${eleCompleted} 學分`,
+      progress: Math.min(100, Math.round((eleCompleted / eleTarget) * 100)),
+      status: isElePassed ? "completed" : "failed",
+      details: isElePassed
+        ? `已修畢學分達到選修標準，累計超出 ${Math.max(0, eleCompleted - eleTarget)} 學分`
+        : `尚需選修課程，累計不達指標 ${eleTarget} 學分，尚缺 ${Math.max(0, eleTarget - eleCompleted)} 學分`
     });
 
-    // 3. Minimum Total Credits Rule
+    // 3. General Education
+    const genTarget = dashboard.categoryProgress.general.target;
+    const genCompleted = dashboard.categoryProgress.general.completed;
+    const isGenPassed = genResult ? genResult.is_passed : genCompleted >= genTarget;
+    rules.push({
+      id: "r3",
+      name: "通識學分門檻",
+      type: "General Education",
+      required: `>= ${genTarget} 學分`,
+      completed: `${genCompleted} 學分`,
+      progress: Math.min(100, Math.round((genCompleted / genTarget) * 100)),
+      status: isGenPassed ? "completed" : (genCompleted >= (genTarget * 0.8) ? "warning" : "failed"),
+      details: isGenPassed
+        ? `已修滿 ${genTarget} 學分通識課程`
+        : `尚缺 ${Math.max(0, genTarget - genCompleted)} 學分通識主線學科`
+    });
+
+    // 4. Physical Education
+    const peTarget = dashboard.categoryProgress.pe.target;
+    const peCompleted = dashboard.categoryProgress.pe.completed;
+    const isPePassed = peResult ? peResult.is_passed : peCompleted >= peTarget;
+    rules.push({
+      id: "r4",
+      name: `體育 ${peTarget} 學期`,
+      type: "Physical Education",
+      required: `${peTarget} 學期必修`,
+      completed: `${peCompleted} 學期`,
+      progress: Math.min(100, Math.round((peCompleted / peTarget) * 100)),
+      status: isPePassed ? "completed" : "failed",
+      details: isPePassed
+        ? `已通過 ${peTarget} 學期體育必修課程`
+        : `體育學期數不夠（已修 ${peCompleted}/${peTarget} 學期）`
+    });
+
+    // 5. English Proficiency
+    const englishPassed = dashboard.categoryProgress.english.completed;
+    rules.push({
+      id: "r5",
+      name: "英文能力檢定門檻",
+      type: "Language Proficiency",
+      required: "TOEIC 785 分以上",
+      completed: englishPassed ? "已通過 English 門檻" : "TOEIC 710 分 (未通過)",
+      progress: englishPassed ? 100 : 0,
+      status: englishPassed ? "completed" : "failed",
+      details: englishPassed 
+        ? "已通過外文英檢畢業門檻" 
+        : "英文門檻未完成。需上傳符合之檢定證明，或於最後學年修讀並通過【進階英文學分班】"
+    });
+
+    // 6. Minimum Total Credits Rule
+    const totalRequired = dashboard.totalRequiredCredits || 128;
+    const totalCompleted = dashboard.totalCompletedCredits;
     rules.push({
       id: "r6",
       name: "最低畢業總學分",
       type: "Total Credits",
-      required: ">= 128 學分",
-      completed: `${dashboard.totalCompletedCredits} 學分`,
-      progress: Math.min(100, Math.round((dashboard.totalCompletedCredits / 128) * 100)),
-      status: dashboard.totalCompletedCredits >= 128 ? "completed" : (dashboard.totalCompletedCredits >= 100 ? "warning" : "failed"),
-      details: dashboard.totalCompletedCredits >= 128
-        ? `累計修得 ${dashboard.totalCompletedCredits} 學分，高過大專院校最低門檻`
-        : `累計修得 ${dashboard.totalCompletedCredits} 學分，剩餘 ${dashboard.missingCredits} 學分`
+      required: `>= ${totalRequired} 學分`,
+      completed: `${totalCompleted} 學分`,
+      progress: Math.min(100, Math.round((totalCompleted / totalRequired) * 100)),
+      status: totalCompleted >= totalRequired ? "completed" : (totalCompleted >= (totalRequired * 0.78) ? "warning" : "failed"),
+      details: totalCompleted >= totalRequired
+        ? `累計修得 ${totalCompleted} 學分，高過大專院校最低門檻`
+        : `累計修得 ${totalCompleted} 學分，剩餘 ${Math.max(0, totalRequired - totalCompleted)} 學分`
     });
 
     return rules;
