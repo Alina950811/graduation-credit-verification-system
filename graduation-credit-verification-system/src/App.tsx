@@ -11,7 +11,6 @@ import EnrollmentUpload from './pages/EnrollmentUpload';
 import CoursesQuery from './pages/CoursesQuery';
 import GraduationCheck from './pages/GraduationCheck';
 import CourseRecommendation from './pages/CourseRecommendation';
-import ClassroomWarning from './pages/ClassroomWarning';
 import SidebarLayout from './layouts/SidebarLayout';
 
 export default function App() {
@@ -59,14 +58,6 @@ export default function App() {
           element={
             <SidebarLayout>
               <CourseRecommendation />
-            </SidebarLayout>
-          } 
-        />
-        <Route 
-          path="/classroom-warning" 
-          element={
-            <SidebarLayout>
-              <ClassroomWarning />
             </SidebarLayout>
           } 
         />

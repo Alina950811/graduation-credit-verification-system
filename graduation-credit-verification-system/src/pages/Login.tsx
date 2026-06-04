@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Lock, User, AlertCircle, Sparkles, BookOpen, Clock } from 'lucide-react';
+import { GraduationCap, Lock, User, AlertCircle, Sparkles, BookOpen } from 'lucide-react';
 import { graduationService } from '../services/api';
 
 export default function Login() {
@@ -68,10 +68,10 @@ export default function Login() {
             </div>
 
             <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-cyan-300 shrink-0 mt-0.5" />
+              <BookOpen className="w-5 h-5 text-cyan-300 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-slate-100">教室走動安全預警</h4>
-                <p className="text-[11px] text-slate-400">檢測山上與山下校區課表，預先評估 10 分鐘下課極限步行與遲到風險。</p>
+                <h4 className="text-xs font-bold text-slate-100">畢業門檻與英檢比對</h4>
+                <p className="text-[11px] text-slate-400">一併分析英文畢業門檻與體育必修學期，提供最完整的學分合格圖章。</p>
               </div>
             </div>
           </div>

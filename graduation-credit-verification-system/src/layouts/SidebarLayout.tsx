@@ -6,7 +6,6 @@ import {
   BookOpen, 
   Award, 
   Sparkles, 
-  AlertTriangle, 
   LogOut, 
   Menu, 
   X, 
@@ -85,7 +84,6 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
     { name: '修課紀錄查詢', path: '/courses', icon: BookOpen },
     { name: '畢業規則檢核', path: '/check', icon: Award },
     { name: '補修課程推薦', path: '/recommendations', icon: Sparkles },
-    { name: '教室走動預警', path: '/classroom-warning', icon: AlertTriangle },
   ];
 
   return (

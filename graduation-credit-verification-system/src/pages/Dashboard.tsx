@@ -301,7 +301,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold uppercase tracking-widest text-[#1E3A5F]">系統重點風險預警</h3>
-              <span className="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded font-bold">2 項待辦</span>
+              <span className="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded font-bold">1 項待辦</span>
             </div>
 
             <div className="space-y-3">
@@ -316,20 +316,6 @@ export default function Dashboard() {
                   </p>
                   <Link to="/recommendations" className="text-[11px] text-[#1E3A5F] font-bold hover:underline block mt-1">
                     看推薦安排補修 →
-                  </Link>
-                </div>
-              </div>
-
-              {/* Alert item 2 */}
-              <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100 flex gap-2.5">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-800">跨校區大課堂連堂 (大風險)</h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    週三下課下山，從逸仙樓（商館）接山上網球場，連堂走動容易遲到，有上肢活動挫力之虞。
-                  </p>
-                  <Link to="/classroom-warning" className="text-[11px] text-amber-800 font-extrabold hover:underline block mt-1">
-                    查看連堂路線預警 →
                   </Link>
                 </div>
               </div>

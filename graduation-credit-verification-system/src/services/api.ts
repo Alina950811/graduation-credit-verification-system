@@ -24,6 +24,21 @@ apiClient.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+// Axios Response Interceptor to handle 401 Unauthorized and redirect to login
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('student_id');
+      localStorage.removeItem('student_dashboard');
+      localStorage.removeItem('isLoggedIn');
+      window.location.hash = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Helper to initialize LocalStorage with frontend-only configs if empty
 const initLocalStorage = () => {
   if (!localStorage.getItem('upload_history')) {
