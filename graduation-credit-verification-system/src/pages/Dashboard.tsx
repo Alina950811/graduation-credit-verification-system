@@ -139,6 +139,20 @@ export default function Dashboard() {
     });
   }
 
+  // 6. Minimum total credits missing
+  const missingTotal = 128 - totalCompleted;
+  if (missingTotal > 0) {
+    alertsList.push({
+      id: 'total-missing',
+      type: 'danger',
+      title: `畢業總學分不足 (缺 ${missingTotal} 學分)`,
+      description: `畢業審查要求最低 128 總學分，您目前累計僅修得 ${totalCompleted} 學分，尚缺 ${missingTotal} 學分。您可以透過增修選修科目、通識或自由選修學分來補足。`,
+      link: '/upload',
+      linkText: '前往上傳修課紀錄 →',
+      icon: 'shield-alert'
+    });
+  }
+
   return (
     <div className="space-y-8">
       
