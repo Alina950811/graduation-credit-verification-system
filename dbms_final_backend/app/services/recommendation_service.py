@@ -48,7 +48,14 @@ class RecommendationService:
                 missing_categories.append(rule.category_id)
 
         if not missing_categories:
-            return [] # 已滿足畢業條件
+            # Check if total credits is less than 128
+            # Sum up required (1), elective (2), general (3), and english (5) earned credits
+            total_earned = sum(earned_dict.get(cat_id, 0) for cat_id in [1, 2, 3, 5])
+            if total_earned < 128:
+                # Still need general or elective courses to make up the 128 total
+                missing_categories = [2, 3]
+            else:
+                return [] # 已滿足畢業條件
 
         # 4. 計算所有課程的同儕通過率 (通過人數 / 總修課人數)
         peer_stats = self.db.execute(

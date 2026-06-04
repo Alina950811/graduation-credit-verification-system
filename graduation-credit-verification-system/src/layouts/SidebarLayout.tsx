@@ -220,7 +220,7 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
             <span className="text-xs bg-cyan-100 text-cyan-800 px-2.5 py-0.5 rounded-full font-bold">
-              國立政治大學 (模擬環境)
+              國立政治大學
             </span>
           </div>
 

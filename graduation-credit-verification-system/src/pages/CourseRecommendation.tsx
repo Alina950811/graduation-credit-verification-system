@@ -94,7 +94,7 @@ export default function CourseRecommendation() {
             <Sparkles className="w-3.5 h-3.5 text-yellow-600 animate-pulse" />
             AI 精選推薦 (AI course assistant algorithms)
           </span>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">補修課程推薦 (Top 推荐補選課程)</h2>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">補修課程推薦</h2>
           <p className="text-sm text-slate-500 mt-1">
             系統會自動偵測您的<strong>欠缺學分類別</strong>，並依同儕通過率及評鑑甜度大數據，進行最佳補考補修排序。
           </p>
