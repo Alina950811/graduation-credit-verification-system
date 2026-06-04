@@ -16,7 +16,10 @@ class Base(DeclarativeBase):
 # engine 負責管理 Python 和 MySQL 之間的連線
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=True
+    echo=False,
+    pool_size=20,
+    max_overflow=30,
+    pool_pre_ping=True
 )
 
 
