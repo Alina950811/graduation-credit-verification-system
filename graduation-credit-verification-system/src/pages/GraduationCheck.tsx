@@ -266,19 +266,26 @@ export default function GraduationCheck() {
       )}
 
       {/* Graduation eligibility board alert */}
-      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h4 className="text-sm font-black text-slate-800">畢業學位審查總結 (Overall Verification Result)</h4>
-          <p className="text-xs text-slate-500">
-            本學年由系辦主任與課務委員實行初審與複審，學生本人需全數亮起<strong>「審定合格」</strong>綠燈方可領取學士學位證書。
-          </p>
-        </div>
+      {(() => {
+        const isGraduationReady = rules.length > 0 && rules.every(r => r.status === 'completed');
+        return (
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h4 className="text-sm font-black text-slate-800">畢業學位審查總結 (Overall Verification Result)</h4>
+              <p className="text-xs text-slate-500">
+                本學年由系辦主任與課務委員實行初審與複審，學生本人需全數亮起<strong>「審定合格」</strong>綠燈方可領取學士學位證書。
+              </p>
+            </div>
 
-        <div className="shrink-0 text-center py-2 px-6 bg-rose-50 border border-rose-100 rounded-xl">
-          <div className="text-[10px] font-extrabold text-rose-500 uppercase tracking-widest">目前學位判定</div>
-          <div className="text-base font-black text-rose-700 mt-1">條件尚未滿足 (Pending)</div>
-        </div>
-      </div>
+            <div className={`shrink-0 text-center py-2 px-6 border rounded-xl ${isGraduationReady ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-105'}`}>
+              <div className={`text-[10px] font-extrabold uppercase tracking-widest ${isGraduationReady ? 'text-emerald-500' : 'text-rose-500'}`}>目前學位判定</div>
+              <div className={`text-base font-black mt-1 ${isGraduationReady ? 'text-emerald-700' : 'text-rose-700'}`}>
+                {isGraduationReady ? '符合畢業資格 (Eligible)' : '條件尚未滿足 (Pending)'}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

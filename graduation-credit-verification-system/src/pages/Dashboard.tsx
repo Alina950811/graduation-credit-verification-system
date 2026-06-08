@@ -126,18 +126,7 @@ export default function Dashboard() {
     });
   }
 
-  // 5. English proficiency not passed
-  if (!dashboard.categoryProgress.english.completed) {
-    alertsList.push({
-      id: 'english-pending',
-      type: 'danger',
-      title: '英文檢定門檻未通過',
-      description: '外文英檢畢業門檻尚未通過。請盡速提交 TOEIC 785 分以上或同等英檢證明，或於大四修讀英文學分班。',
-      link: '/check',
-      linkText: '查看英檢檢定細則 →',
-      icon: 'shield-alert'
-    });
-  }
+
 
   // 6. Minimum total credits missing
   const missingTotal = 128 - totalCompleted;
@@ -375,14 +364,14 @@ export default function Dashboard() {
               </p>
             </div>
 
-            {/* Category 5: 英文檢定 */}
-            <div className="p-3.5 bg-slate-55 rounded-xl border border-dotted border-slate-200 flex items-center justify-between text-sm">
+            {/* Category 5: 大學英文課程 */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-dotted border-slate-200 flex items-center justify-between text-sm">
               <span className="font-semibold text-slate-700 flex items-center gap-2">
-                <span className="inline-block w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">!</span>
-                外文英檢門檻 (Graduation English Requirement)
+                <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full"></span>
+                大學英文課程 (University English)
               </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${dashboard.categoryProgress.english.completed ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-150 text-rose-800'}`}>
-                {dashboard.categoryProgress.english.completed ? '已通過 (Pass)' : '未核准 (Pending)'}
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${dashboard.categoryProgress.english.completed ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                {dashboard.categoryProgress.english.completed ? '已修畢 (Pass)' : '未修滿 (Pending)'}
               </span>
             </div>
 

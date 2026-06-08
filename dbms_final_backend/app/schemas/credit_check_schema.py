@@ -32,11 +32,18 @@ class RequiredCourseCheckResult(BaseModel):
     missing_courses: list[MissingRequiredCourse]
 
 
+class CoreGeCheckResult(BaseModel):
+    is_passed: bool
+    passed_categories: int
+    total_core_courses: int
+
+
 class CreditCheckResponse(BaseModel):
     student_id: str
     admission_year: int
     required_course_check: RequiredCourseCheckResult
     results: list[CreditCheckRuleResult]
+    core_ge_check: Optional[CoreGeCheckResult] = None
 
 
 class CreditCheckSummaryResponse(BaseModel):
