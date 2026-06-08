@@ -139,6 +139,19 @@ export default function Dashboard() {
     });
   }
 
+  // 4.5 English course missing
+  if (!dashboard.categoryProgress.english.completed) {
+    alertsList.push({
+      id: 'english-courses-missing',
+      type: 'danger',
+      title: '大學英文課程未修滿',
+      description: '畢業規範要求至少修滿 2 門（共 6 學分）大學英文課程。您目前尚未修滿此課程學分門檻。',
+      link: '/check',
+      linkText: '檢視英文學分門檻 →',
+      icon: 'shield-alert'
+    });
+  }
+
 
 
   // 6. Minimum total credits missing
