@@ -245,6 +245,7 @@ export const graduationService = {
       missingCredits: Math.max(0, totalRequired - totalCompleted),
       missingRequiredCount: creditCheck.required_course_check.missing_required,
       missingRequiredCourses: missingCourses,
+      coreGeCheck: creditCheck.core_ge_check,
       categoryProgress
     };
 
@@ -274,7 +275,7 @@ export const graduationService = {
   },
 
   async addCourseRecord(record: Omit<CourseRecord, 'id'>): Promise<CourseRecord> {
-    const studentId = localStorage.getItem('student_id') || '110306078';
+    const studentId = localStorage.getItem('student_id') || '111001001';
 
     // 1. Check if course exists
     let courseExists = false;
@@ -677,7 +678,7 @@ export const graduationService = {
 
   // Course Recommendations API
   async getRecommendedCourses(): Promise<RecommendedCourse[]> {
-    const studentId = localStorage.getItem('student_id') || '110306078';
+    const studentId = localStorage.getItem('student_id') || '111001001';
     const response = await apiClient.get(`/recommendations/${studentId}`);
 
     return response.data.map((item: any) => {

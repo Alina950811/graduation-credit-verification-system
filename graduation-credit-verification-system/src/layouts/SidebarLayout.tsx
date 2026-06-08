@@ -26,8 +26,8 @@ export default function SidebarLayout({ children }: SidebarLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [studentName, setStudentName] = useState('聖結石');
-  const [studentId, setStudentId] = useState('110306078');
+  const [studentName, setStudentName] = useState('王大明');
+  const [studentId, setStudentId] = useState('111001001');
   const [dept, setDept] = useState('資訊科學系');
   const [resetting, setResetting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

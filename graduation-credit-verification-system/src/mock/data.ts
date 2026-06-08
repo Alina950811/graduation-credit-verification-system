@@ -1,20 +1,20 @@
 import { CourseRecord, GradRule, RecommendedCourse, ClassroomTransit, StudentDashboard } from '../types';
 
 export const initialStudentDashboard: StudentDashboard = {
-  studentName: "聖結石",
-  studentId: "110306078",
+  studentName: "王大明",
+  studentId: "111001001",
   department: "資訊科學系 (Computer Science)",
   currentSemester: "112 學年度第二學期",
   totalRequiredCredits: 128,
-  totalCompletedCredits: 106,
-  missingCredits: 22,
-  missingRequiredCount: 2,
+  totalCompletedCredits: 101,
+  missingCredits: 27,
+  missingRequiredCount: 0,
   categoryProgress: {
-    required: { completed: 52, target: 58 },
-    elective: { completed: 28, target: 18 },
-    general: { completed: 26, target: 28 },
+    required: { completed: 57, target: 57 },
+    elective: { completed: 16, target: 43 },
+    general: { completed: 28, target: 28 },
     pe: { completed: 4, target: 4 }, // 4 semesters
-    english: { completed: false, target: "TOEIC 785 or equivalent" }
+    english: { completed: true, target: "大學英文 2 門" }
   }
 };
 

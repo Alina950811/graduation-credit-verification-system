@@ -52,6 +52,11 @@ export interface StudentDashboard {
   missingCredits: number;
   missingRequiredCount: number;
   missingRequiredCourses?: string[];
+  coreGeCheck?: {
+    is_passed: boolean;
+    passed_categories: number;
+    total_core_courses: number;
+  };
   categoryProgress: {
     required: { completed: number; target: number };
     elective: { completed: number; target: number };

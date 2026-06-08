@@ -5,7 +5,7 @@ import { graduationService } from '../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [studentId, setStudentId] = useState('110306078');
+  const [studentId, setStudentId] = useState('111001001');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -114,12 +114,12 @@ export default function Login() {
                     required
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value)}
-                    placeholder="請輸入學號，例如: 110306078"
+                    placeholder="請輸入學號，例如: 111001001"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#1E3A5F] focus:ring-2 focus:ring-[#1E3A5F]/15 transition font-mono text-sm"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  測試學號已輸入：110306078（資科系 聖結石）
+                  測試學號已輸入：111001001（資科系 王大明）
                 </p>
               </div>
 
@@ -149,7 +149,7 @@ export default function Login() {
                   原型體驗快速提示
                 </span>
                 <p className="text-xs text-slate-600 leading-snug">
-                  系統已對接 Python FastAPI 後端（http://127.0.0.1:8000）。請輸入已註冊的學年學期帳密。測試學號為：110306078，密碼：password123。
+                  系統已對接 Python FastAPI 後端（http://127.0.0.1:8000）。測試學號：111001001 (完全合格)、111001002 (缺必修英文)、111001003 (核心通識跨類不符)、111001004 (缺選修與社會通識)，密碼皆為 password123。
                 </p>
               </div>
 

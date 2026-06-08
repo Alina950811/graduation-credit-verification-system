@@ -84,6 +84,19 @@ export default function Dashboard() {
     });
   }
 
+  // 1.5 Core GE cross-domain missing
+  if (dashboard.coreGeCheck && !dashboard.coreGeCheck.is_passed) {
+    alertsList.push({
+      id: 'core-ge-domain-missing',
+      type: 'danger',
+      title: '核心通識領域不足門檻',
+      description: `核心通識必選修需修讀至少 2 種不同領域（自然/社會/人文）且達 2 門。目前僅修得 ${dashboard.coreGeCheck.passed_categories} 類別，共 ${dashboard.coreGeCheck.total_core_courses} 門。`,
+      link: '/check',
+      linkText: '檢視核心通識規則明細 →',
+      icon: 'shield-alert'
+    });
+  }
+
   // 2. General credits missing
   const missingGeneral = dashboard.categoryProgress.general.target - dashboard.categoryProgress.general.completed;
   if (missingGeneral > 0) {
